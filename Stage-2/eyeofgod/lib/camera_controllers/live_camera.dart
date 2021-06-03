@@ -129,6 +129,8 @@ class _LiveFeedState extends State<LiveFeed> {
   double upd_start_long;
   double upd_end_lat;
   double upd_end_long;
+  double next_end_lat;
+  double next_end_long;
   FlutterTts flutterTts;
   double volume = 0.5;
   double pitch = 1.0;
@@ -333,6 +335,43 @@ class _LiveFeedState extends State<LiveFeed> {
     });
   }
 
+  double angleBetweenPoints(LatLng latlongA, LatLng latlongB, LatLng latlongC) {
+    double headingBA = calculateBearing(latlongB, latlongA);
+    double headingBC = calculateBearing(latlongB, latlongC);
+
+    return angleBetweenHeadings(headingBA, headingBC);
+  }
+
+  double angleBetweenHeadings(double headingBA, double headingBC) {
+    double angle = ((headingBA - headingBC) + 360) % 360;
+
+    if (angle > 180)
+      return 360 - angle;
+    else
+      return angle;
+  }
+
+  double calculateBearing(LatLng latlong1, LatLng latlong2) {
+    double lat1 = DegtoRad(latlong1.latitude);
+    double lon1 = latlong1.longitude;
+    double lat2 = DegtoRad(latlong2.latitude);
+    double lon2 = latlong2.longitude;
+    double dLon = DegtoRad(lon2 - lon1);
+    double y = math.sin(dLon) * math.cos(lat2);
+    double x = math.cos(lat1) * math.sin(lat2) -
+        math.sin(lat1) * math.cos(lat2) * math.cos(dLon);
+    double brng = (RadtoDeg(math.atan2(y, x)) + 360) % 360;
+    return brng;
+  }
+
+  double DegtoRad(double x) {
+    return x * math.pi / 180;
+  }
+
+  double RadtoDeg(double x) {
+    return x * 180 / math.pi;
+  }
+
   void path_match(double cur_lat, double cur_lng) {
     String inst =
         "You are not on the correct route to your destination. Please turn around";
@@ -343,9 +382,15 @@ class _LiveFeedState extends State<LiveFeed> {
     if (lat_check && long_check) {
       print("On path");
     } else {
+      LatLng latlongA = LatLng(cur_lat, cur_lng);
+      LatLng latlongB = LatLng(upd_end_lat, upd_end_long);
+      LatLng latlongC = LatLng(next_end_lat, next_end_long);
+      double corr_angle = angleBetweenPoints(latlongA, latlongB, latlongC);
+      String inst2 = "Turn by " + corr_angle.toString() + " degrees ";
       var SpeakInt = SpeakThis();
       SpeakInt.initTts();
       SpeakInt.speak_tts(inst);
+      SpeakInt.speak_tts(inst2);
     }
   }
 
@@ -357,12 +402,26 @@ class _LiveFeedState extends State<LiveFeed> {
       upd_end_long = thisDetails.steps[i]['end_location']['lng'];
       upd_start_lat = thisDetails.steps[i]['start_location']['lat'];
       upd_start_long = thisDetails.steps[i]['start_location']['lng'];
+      next_end_lat = thisDetails.steps[i + 1]['end_location']['lat'];
+      next_end_long = thisDetails.steps[i + 1]['end_location']['lng'];
       nav_command = thisDetails.steps[i]['html_instructions'];
       print("inside  while of check voice");
       if (mid(upd_start_lat, upd_start_long, upd_end_lat, upd_end_long, cur_lat,
           cur_lng)) {
         print("inside if of check voice");
         updateCoordi(nav_command);
+        LatLng latlongA = new LatLng(upd_start_lat, upd_start_long);
+        LatLng latlongB = new LatLng(upd_end_lat, upd_end_long);
+        LatLng latlongC = new LatLng(next_end_lat, next_end_long);
+        print("After LatLng: ");
+        double corr_angle = angleBetweenPoints(latlongA, latlongB, latlongC);
+        print("After corr_angle");
+        String inst3 = "Turn by " + corr_angle.toString() + " degrees ";
+        print("After inst3 string");
+        var SpeakInt = SpeakThis();
+        SpeakInt.initTts();
+        SpeakInt.speak_tts(inst3);
+        print("Inst3 = " + inst3);
         i++;
         return;
       }
