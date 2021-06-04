@@ -81,7 +81,7 @@ Future<void> toFlask(CameraImage image) async {
         print("Please");
 
         MultipartRequest request =
-            MultipartRequest('POST', Uri.parse('http://26008c324979.ngrok.io/'));
+            MultipartRequest('POST', Uri.parse('http://f149b56d8168.ngrok.io'));
         // Outdoor Navigation IP
         request.files.add(MultipartFile.fromString("Counter", img64));
         request.fields["x"] = gast[0];

@@ -125,6 +125,7 @@ class _LiveFeedState extends State<LiveFeed> {
   LatLng pinPosition;
   var thisDetails;
   String nav_command;
+  String direction;
   double upd_start_lat;
   double upd_start_long;
   double upd_end_lat;
@@ -386,7 +387,8 @@ class _LiveFeedState extends State<LiveFeed> {
       LatLng latlongB = LatLng(upd_end_lat, upd_end_long);
       LatLng latlongC = LatLng(next_end_lat, next_end_long);
       double corr_angle = angleBetweenPoints(latlongA, latlongB, latlongC);
-      String inst2 = "Turn by " + corr_angle.toString() + " degrees ";
+      double angle = double.parse((corr_angle).toStringAsFixed(2));
+      String inst2 = "Turn by " + angle.toString() + " degrees ";
       var SpeakInt = SpeakThis();
       SpeakInt.initTts();
       SpeakInt.speak_tts(inst);
@@ -405,23 +407,27 @@ class _LiveFeedState extends State<LiveFeed> {
       next_end_lat = thisDetails.steps[i + 1]['end_location']['lat'];
       next_end_long = thisDetails.steps[i + 1]['end_location']['lng'];
       nav_command = thisDetails.steps[i]['html_instructions'];
+      direction = thisDetails.steps[i]['maneuver'];
       print("inside  while of check voice");
       if (mid(upd_start_lat, upd_start_long, upd_end_lat, upd_end_long, cur_lat,
           cur_lng)) {
         print("inside if of check voice");
         updateCoordi(nav_command);
-        LatLng latlongA = new LatLng(upd_start_lat, upd_start_long);
-        LatLng latlongB = new LatLng(upd_end_lat, upd_end_long);
-        LatLng latlongC = new LatLng(next_end_lat, next_end_long);
-        print("After LatLng: ");
-        double corr_angle = angleBetweenPoints(latlongA, latlongB, latlongC);
-        print("After corr_angle");
-        String inst3 = "Turn by " + corr_angle.toString() + " degrees ";
-        print("After inst3 string");
-        var SpeakInt = SpeakThis();
-        SpeakInt.initTts();
-        SpeakInt.speak_tts(inst3);
-        print("Inst3 = " + inst3);
+        if (direction != null) {
+          LatLng latlongA = new LatLng(upd_start_lat, upd_start_long);
+          LatLng latlongB = new LatLng(upd_end_lat, upd_end_long);
+          LatLng latlongC = new LatLng(next_end_lat, next_end_long);
+          print("After LatLng: ");
+          double corr_angle = angleBetweenPoints(latlongA, latlongB, latlongC);
+          print("After corr_angle");
+          double angle = double.parse((corr_angle).toStringAsFixed(2));
+          String inst3 = "Turn by " + angle.toString() + " degrees ";
+          print("After inst3 string");
+          var SpeakInt = SpeakThis();
+          SpeakInt.initTts();
+          SpeakInt.speak_tts(inst3);
+          print("Inst3 = " + inst3);
+        }
         i++;
         return;
       }
