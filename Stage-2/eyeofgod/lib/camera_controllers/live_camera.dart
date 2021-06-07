@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:collection';
 
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
@@ -23,6 +24,7 @@ import 'package:eyeofgod/Speech/speech_api.dart';
 import 'package:eyeofgod/Speech/utils.dart';
 import 'package:eyeofgod/DataClass/Prediction.dart';
 import 'package:flutter_tts/flutter_tts.dart';
+import 'package:sensors_plus/sensors_plus.dart';
 
 import 'package:flutter/services.dart';
 
@@ -142,6 +144,12 @@ class _LiveFeedState extends State<LiveFeed> {
   bool isListening = false;
   List<_Message> messages = List<_Message>();
   String _messageBuffer = '';
+  List<double> _userAccelerometerValues;
+  List<double> _gyroscopeValues;
+  List<StreamSubscription<dynamic>> _streamSubscriptions =
+      <StreamSubscription<dynamic>>[];
+
+  var gyro_global = List<List>.filled(5, []);
 
   List buttonColorsDefault = [
     Colors.cyanAccent,
@@ -158,7 +166,17 @@ class _LiveFeedState extends State<LiveFeed> {
   @override
   void initState() {
     super.initState();
-
+    _streamSubscriptions.add(gyroscopeEvents.listen((GyroscopeEvent event) {
+      setState(() {
+        _gyroscopeValues = <double>[event.x, event.y, event.z];
+      });
+    }));
+    _streamSubscriptions
+        .add(userAccelerometerEvents.listen((UserAccelerometerEvent event) {
+      setState(() {
+        _userAccelerometerValues = <double>[event.x, event.y, event.z];
+      });
+    }));
     loadTfModel();
     initTts();
 
@@ -238,6 +256,7 @@ class _LiveFeedState extends State<LiveFeed> {
     final GoogleMapController controller = await _controller.future;
     controller.animateCamera(CameraUpdate.newCameraPosition(cPosition));
     print("outside set state of coordi");
+    straight_path();
     setState(() {
       print("in set state of coordi");
       pinPosition =
@@ -373,6 +392,35 @@ class _LiveFeedState extends State<LiveFeed> {
     return x * 180 / math.pi;
   }
 
+  void straight_path() {
+    final List<String> gyroscope =
+        _gyroscopeValues.map((double v) => v.toStringAsFixed(1)).toList();
+    final List<String> userAccelerometer = _userAccelerometerValues
+        .map((double v) => v.toStringAsFixed(1))
+        .toList();
+    print("Gyro: $gyroscope, Acc: $userAccelerometer");
+    print("gyro" + _gyroscopeValues[0].toString());
+    if (gyro_global.last.isNotEmpty) {
+      print("remove gyro");
+      gyro_global.removeAt(0);
+      gyro_global.add(gyroscope);
+    } else {
+      print("add gyro");
+      gyro_global.add(gyroscope);
+      print("Gyro list:" + gyro_global.toString());
+    }
+    if (userAccelerometer != 0.0) {
+      print("inside acc");
+      if (gyro_global[2] != 0.0 &&
+          gyro_global[0] == 0.0 &&
+          gyro_global[1] == 0.0 &&
+          gyro_global[3] == 0.0 &&
+          gyro_global[4] == 0.0) {
+        print("Not on a straight path");
+      }
+    }
+  }
+
   void path_match(double cur_lat, double cur_lng) {
     String inst =
         "You are not on the correct route to your destination. Please turn around";
@@ -394,6 +442,7 @@ class _LiveFeedState extends State<LiveFeed> {
       SpeakInt.speak_tts(inst);
       SpeakInt.speak_tts(inst2);
     }
+    // straight_path();
   }
 
   int i = 0;
