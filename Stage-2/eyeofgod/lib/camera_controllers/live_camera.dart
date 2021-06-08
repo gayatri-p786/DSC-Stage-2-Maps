@@ -432,12 +432,13 @@ class _LiveFeedState extends State<LiveFeed> {
     }
 
     if (eq(gyro_global[0], ["0.0", "0.0", "0.0"]) &&
-        eq(gyro_global[1], ["0.0", "0.0", "0.0"]) &&
-        eq(gyro_global[3], ["0.0", "0.0", "0.0"]) &&
-        eq(gyro_global[4], ["0.0", "0.0", "0.0"]) &&
-        !eq(gyro_global[2], ["0.0", "0.0", "0.0"]) &&
-        !eq(userAccelerometer, ["0.0", "0.0", "0.0"])) {
-      if (double.parse(gyro_global[2][0]) < 0) {
+            eq(gyro_global[1], ["0.0", "0.0", "0.0"]) &&
+            eq(gyro_global[3], ["0.0", "0.0", "0.0"]) &&
+            eq(gyro_global[4], ["0.0", "0.0", "0.0"]) &&
+            !eq(gyro_global[2], ["0.0", "0.0", "0.0"])
+        // !eq(userAccelerometer, ["0.0", "0.0", "0.0"])
+        ) {
+      if (double.parse(gyro_global[2][0]) < 0.0) {
         var SpeakInt = SpeakThis();
         SpeakInt.initTts();
         String inst5 = "You are not walking on a Straight Path. Turn Left";
