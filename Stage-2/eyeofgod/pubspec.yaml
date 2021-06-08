@@ -52,6 +52,7 @@ dependencies:
   google_map_polyline:
   geocoder:
   location:
+  collection: ^1.15.0 
 
 dev_dependencies:
   flutter_test:

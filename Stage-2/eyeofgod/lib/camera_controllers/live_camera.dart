@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:collection';
 
 import 'package:camera/camera.dart';
+import 'package:collection/equality.dart';
 import 'package:flutter/material.dart';
 import 'package:eyeofgod/tflite_helpers/bounding_box.dart';
 import 'package:eyeofgod/camera_controllers/camera.dart';
@@ -149,7 +150,8 @@ class _LiveFeedState extends State<LiveFeed> {
   List<StreamSubscription<dynamic>> _streamSubscriptions =
       <StreamSubscription<dynamic>>[];
 
-  var gyro_global = List<List>.filled(5, []);
+  List<List<String>> gyro_global = List<List<String>>.filled(5, []);
+  int count_global = 0;
 
   List buttonColorsDefault = [
     Colors.cyanAccent,
@@ -168,13 +170,21 @@ class _LiveFeedState extends State<LiveFeed> {
     super.initState();
     _streamSubscriptions.add(gyroscopeEvents.listen((GyroscopeEvent event) {
       setState(() {
-        _gyroscopeValues = <double>[event.x, event.y, event.z];
+        _gyroscopeValues = <double>[
+          event.x.abs(),
+          event.y.abs(),
+          event.z.abs()
+        ];
       });
     }));
     _streamSubscriptions
         .add(userAccelerometerEvents.listen((UserAccelerometerEvent event) {
       setState(() {
-        _userAccelerometerValues = <double>[event.x, event.y, event.z];
+        _userAccelerometerValues = <double>[
+          event.x.abs(),
+          event.y.abs(),
+          event.z.abs()
+        ];
       });
     }));
     loadTfModel();
@@ -400,26 +410,39 @@ class _LiveFeedState extends State<LiveFeed> {
         .toList();
     print("Gyro: $gyroscope, Acc: $userAccelerometer");
     print("gyro" + _gyroscopeValues[0].toString());
-    if (gyro_global.last.isNotEmpty) {
+    if (count_global == 5) {
       print("remove gyro");
-      gyro_global.removeAt(0);
-      gyro_global.add(gyroscope);
+      for (int i = 0; i < 4; i++) {
+        print("inside for");
+        gyro_global[i] = gyro_global[i + 1];
+        print("after gyro_glo");
+      }
+      gyro_global[4] = gyroscope;
+      print("Gyro list:" + gyro_global.toString());
     } else {
       print("add gyro");
-      gyro_global.add(gyroscope);
+      gyro_global[count_global] = gyroscope;
+      count_global++;
       print("Gyro list:" + gyro_global.toString());
     }
+
     if (userAccelerometer != 0.0) {
       print("inside acc");
-      if (gyro_global[2] != 0.0 &&
-          gyro_global[0] == 0.0 &&
-          gyro_global[1] == 0.0 &&
-          gyro_global[3] == 0.0 &&
-          gyro_global[4] == 0.0) {
-        print("Not on a straight path");
+      if (eq(gyro_global[0], ["0.0", "0.0", "0.0"]) &&
+          eq(gyro_global[1], ["0.0", "0.0", "0.0"]) &&
+          eq(gyro_global[3], ["0.0", "0.0", "0.0"]) &&
+          eq(gyro_global[4], ["0.0", "0.0", "0.0"]) &&
+          !eq(gyro_global[2], ["0.0", "0.0", "0.0"])) {
+        String inst4 = "You are not walking on a Straight Path";
+        var SpeakInt = SpeakThis();
+        SpeakInt.initTts();
+        SpeakInt.speak_tts(inst4);
+        print("Inst4 = " + inst4);
       }
     }
   }
+
+  Function eq = const ListEquality().equals;
 
   void path_match(double cur_lat, double cur_lng) {
     String inst =
