@@ -170,11 +170,7 @@ class _LiveFeedState extends State<LiveFeed> {
     super.initState();
     _streamSubscriptions.add(gyroscopeEvents.listen((GyroscopeEvent event) {
       setState(() {
-        _gyroscopeValues = <double>[
-          event.x.abs(),
-          event.y.abs(),
-          event.z.abs()
-        ];
+        _gyroscopeValues = <double>[event.x, event.y, event.z];
       });
     }));
     _streamSubscriptions
@@ -403,8 +399,17 @@ class _LiveFeedState extends State<LiveFeed> {
   }
 
   void straight_path() {
-    final List<String> gyroscope =
-        _gyroscopeValues.map((double v) => v.toStringAsFixed(1)).toList();
+    List<String> gyroscope;
+    print("Abs value: " + _gyroscopeValues[0].abs().toString());
+    if ((_gyroscopeValues[0]).abs().toStringAsFixed(1) == "0.0" &&
+        (_gyroscopeValues[1]).abs().toStringAsFixed(1) == "0.0" &&
+        (_gyroscopeValues[2]).abs().toStringAsFixed(1) == "0.0") {
+      print("inside abs");
+      gyroscope = ["0.0", "0.0", "0.0"];
+    } else {
+      gyroscope =
+          _gyroscopeValues.map((double v) => v.toStringAsFixed(1)).toList();
+    }
     final List<String> userAccelerometer = _userAccelerometerValues
         .map((double v) => v.toStringAsFixed(1))
         .toList();
@@ -426,18 +431,27 @@ class _LiveFeedState extends State<LiveFeed> {
       print("Gyro list:" + gyro_global.toString());
     }
 
-    if (userAccelerometer != 0.0) {
+    if (!eq(userAccelerometer, ["0.0", "0.0", "0.0"])) {
       print("inside acc");
       if (eq(gyro_global[0], ["0.0", "0.0", "0.0"]) &&
           eq(gyro_global[1], ["0.0", "0.0", "0.0"]) &&
           eq(gyro_global[3], ["0.0", "0.0", "0.0"]) &&
           eq(gyro_global[4], ["0.0", "0.0", "0.0"]) &&
           !eq(gyro_global[2], ["0.0", "0.0", "0.0"])) {
-        String inst4 = "You are not walking on a Straight Path";
-        var SpeakInt = SpeakThis();
-        SpeakInt.initTts();
-        SpeakInt.speak_tts(inst4);
-        print("Inst4 = " + inst4);
+        if (double.parse(gyro_global[2][0]) < 0) {
+          var SpeakInt = SpeakThis();
+          SpeakInt.initTts();
+          String inst5 = "You are not walking on a Straight Path. Turn Left";
+          SpeakInt.speak_tts(inst5);
+          print("Inst5 = " + inst5);
+        }
+        if (double.parse(gyro_global[2][0]) > 0) {
+          var SpeakInt = SpeakThis();
+          SpeakInt.initTts();
+          String inst5 = "You are not walking on a Straight Path. Turn Right";
+          SpeakInt.speak_tts(inst5);
+          print("Inst5 = " + inst5);
+        }
       }
     }
   }
